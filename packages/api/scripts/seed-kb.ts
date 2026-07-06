@@ -223,13 +223,16 @@ async function main() {
   // 2. Upsert categories + published articles (idempotent by name/title).
   let createdCats = 0;
   let createdArticles = 0;
-  for (const cat of CATEGORIES) {
+  for (const [index, cat] of CATEGORIES.entries()) {
     let category = await prisma.kbCategory.findFirst({ where: { workspaceId: wsId, name: cat.name } });
     if (!category) {
       const dto = await createCategory(wsId, cat.name);
       category = await prisma.kbCategory.findUniqueOrThrow({ where: { id: dto.id } });
       createdCats++;
     }
+    // Enforce the display order defined by CATEGORIES (Getting Started first),
+    // overriding the creation-time order (e.g. Billing from the base seed).
+    await prisma.kbCategory.update({ where: { id: category.id }, data: { order: index } });
 
     for (const art of cat.articles) {
       const exists = await prisma.kbArticle.findFirst({ where: { workspaceId: wsId, title: art.title } });

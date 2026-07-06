@@ -109,9 +109,12 @@ npm run dev:web      # http://localhost:5173
    It becomes an EMAIL conversation. Reply from the dashboard → threaded email
    in Maildev. Replies stay in one conversation (RFC-5322 threading).
 4. **Unified inbox** — filter by channel / status; assign, snooze, resolve.
-5. **Knowledge base** — Knowledge Base › create a category + article (rich text)
-   › publish. See it on the public KB page and searchable; type a related
-   question in the chat widget to see auto-suggested articles.
+5. **Knowledge base** — comes pre-seeded with 6 categories and ~17 articles
+   (Getting Started, Orders, Shipping, Returns & Refunds, Billing, Account); run
+   `npm run -w @tele/api seed:kb` to (re)load it. Knowledge Base › create a
+   category + article (rich text) › publish. See it on the public KB page and
+   searchable; type a related question in the chat widget to see auto-suggested
+   articles.
 6. **AI summarization** — open a longer conversation; the right-hand panel shows
    a generated summary (uses local Ollama by default, or Anthropic — see AI
    summarization above; degrades gracefully with neither).
