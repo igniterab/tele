@@ -45,12 +45,29 @@ export default function WidgetFrame() {
     return () => window.removeEventListener("message", onParentMessage);
   }, []);
 
+  // Mark the agent's messages read whenever the widget is open AND this page is
+  // actually on screen — including when the visitor switches *back* to this
+  // tab/window (focus / visibilitychange), not only when a new message arrives.
+  // Without the focus/visibility listeners, a reply that lands while the visitor
+  // is looking elsewhere would never be marked read, so the agent stays on "Sent".
   useEffect(() => {
-    if (panelOpen && conversationId && token) {
-      notifyUnread(0);
-      widgetApi.markRead(token, conversationId).catch(() => {});
+    if (!ready || !token || !conversationId) return;
+    const tok = token;
+    const convoId = conversationId;
+    function markIfActive() {
+      if (panelOpenRef.current && document.visibilityState === "visible") {
+        notifyUnread(0);
+        widgetApi.markRead(tok, convoId).catch(() => {});
+      }
     }
-  }, [panelOpen, conversationId, token, notifyUnread]);
+    markIfActive();
+    window.addEventListener("focus", markIfActive);
+    document.addEventListener("visibilitychange", markIfActive);
+    return () => {
+      window.removeEventListener("focus", markIfActive);
+      document.removeEventListener("visibilitychange", markIfActive);
+    };
+  }, [ready, token, conversationId, panelOpen, messages.length, notifyUnread]);
 
   useEffect(() => {
     if (!workspaceSlug) return;
@@ -89,12 +106,11 @@ export default function WidgetFrame() {
     function onMessageNew(msg: MessageDTO) {
       if (msg.conversationId !== convoId) return;
       setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
-      if (msg.senderType === "AGENT") {
-        if (document.visibilityState === "hidden" || !panelOpenRef.current) {
-          notifyUnread(unreadRef.current + 1);
-        } else {
-          widgetApi.markRead(tok, convoId).catch(() => {});
-        }
+      // When active, the markIfActive effect (keyed on messages.length) marks it
+      // read; when not, surface an unread badge instead.
+      const active = panelOpenRef.current && document.visibilityState === "visible";
+      if (msg.senderType === "AGENT" && !active) {
+        notifyUnread(unreadRef.current + 1);
       }
     }
 
@@ -187,7 +203,16 @@ export default function WidgetFrame() {
     <div className="flex h-screen flex-col bg-white font-sans">
       <div className="bg-brand-600 px-4 py-3 text-white">
         <div className="text-sm font-semibold">Chat with us</div>
-        <div className="text-xs text-brand-100">{agentOnline ? "We're online" : "We'll reply as soon as we can"}</div>
+        <div className="flex items-center gap-1.5 text-xs text-brand-100">
+          {typing ? (
+            <>
+              <TypingDots />
+              <span>Typing…</span>
+            </>
+          ) : (
+            <span>{agentOnline ? "We're online" : "We'll reply as soon as we can"}</span>
+          )}
+        </div>
       </div>
       <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto p-3">
         {!ready && <div className="text-center text-xs text-slate-400">Connecting…</div>}
@@ -258,6 +283,16 @@ function MessageBubble({ message }: { message: MessageDTO }) {
         {isMine && <div className="mt-0.5 text-[10px] text-brand-100">{message.readAt ? "Seen" : "Sent"}</div>}
       </div>
     </div>
+  );
+}
+
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-hidden>
+      <span className="h-1 w-1 animate-bounce rounded-full bg-brand-100 [animation-delay:-0.3s]" />
+      <span className="h-1 w-1 animate-bounce rounded-full bg-brand-100 [animation-delay:-0.15s]" />
+      <span className="h-1 w-1 animate-bounce rounded-full bg-brand-100" />
+    </span>
   );
 }
 

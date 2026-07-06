@@ -43,7 +43,6 @@ export default function ConversationDetail({ workspaceId, conversationId }: Prop
   useEffect(() => {
     const socket = getAgentSocket(workspaceId);
     socket.emit("conversation:join", conversationId);
-    conversationsApi.markRead(workspaceId, conversationId).catch(() => {});
 
     function onMessageNew(msg: MessageDTO) {
       if (msg.conversationId !== conversationId) return;
@@ -52,7 +51,10 @@ export default function ConversationDetail({ workspaceId, conversationId }: Prop
         if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
-      if (msg.senderType === "CONTACT") {
+      // Only mark the visitor's message read if this tab is actually on screen —
+      // otherwise the visitor would see "Seen" while no agent is really looking.
+      // The markIfActive effect handles marking when the agent returns to the tab.
+      if (msg.senderType === "CONTACT" && document.visibilityState === "visible") {
         conversationsApi.markRead(workspaceId, conversationId).catch(() => {});
       }
     }
@@ -139,6 +141,26 @@ export default function ConversationDetail({ workspaceId, conversationId }: Prop
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, conversationId]);
+
+  // Mark the visitor's messages read only while this tab is on screen, and again
+  // when the agent returns to it (focus / visibilitychange). Replaces the old
+  // unconditional mark-on-open, which made the visitor see "Seen" even when the
+  // agent wasn't actually looking at this tab.
+  useEffect(() => {
+    if (!conversationId) return;
+    function markIfActive() {
+      if (document.visibilityState === "visible") {
+        conversationsApi.markRead(workspaceId, conversationId).catch(() => {});
+      }
+    }
+    markIfActive();
+    window.addEventListener("focus", markIfActive);
+    document.addEventListener("visibilitychange", markIfActive);
+    return () => {
+      window.removeEventListener("focus", markIfActive);
+      document.removeEventListener("visibilitychange", markIfActive);
+    };
+  }, [workspaceId, conversationId, messages.length]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
