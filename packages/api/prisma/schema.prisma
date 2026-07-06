@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+}
+
+enum Channel {
+  CHAT
+  EMAIL
+}
+
+enum ConversationStatus {
+  OPEN
+  SNOOZED
+  RESOLVED
+}
+
+enum SenderType {
+  CONTACT
+  AGENT
+  SYSTEM
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum DomainStatus {
+  PENDING
+  VERIFIED
+  SSL_PROVISIONING
+  ACTIVE
+  FAILED
+}
+
+enum SummaryStatus {
+  FRESH
+  STALE
+  FAILED
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  memberships  Membership[]
+  invites      Invite[]
+  contacts     Contact[]
+  conversations Conversation[]
+  kbCategories KbCategory[]
+  kbArticles   KbArticle[]
+  domains      Domain[]
+
+  @@map("workspaces")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+
+  memberships     Membership[]
+  assignedConvos  Conversation[] @relation("AssignedAgent")
+  messages        Message[]
+
+  @@map("users")
+}
+
+model Membership {
+  id          String           @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        Role
+  status      MembershipStatus @default(ACTIVE)
+  createdAt   DateTime         @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@map("memberships")
+}
+
+model Invite {
+  id          String    @id @default(uuid())
+  workspaceId String
+  email       String
+  role        Role
+  token       String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("invites")
+}
+
+model Contact {
+  id            String   @id @default(uuid())
+  workspaceId   String
+  email         String?
+  name          String?
+  visitorToken  String?  @unique
+  createdAt     DateTime @default(now())
+  lastSeenAt    DateTime?
+
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, email])
+  @@map("contacts")
+}
+
+model Conversation {
+  id               String              @id @default(uuid())
+  workspaceId      String
+  channel          Channel
+  status           ConversationStatus  @default(OPEN)
+  contactId        String
+  assigneeId       String?
+  subject          String?
+  snoozedUntil     DateTime?
+  lastMessageAt    DateTime            @default(now())
+  summary          Json?
+  summaryStatus    SummaryStatus?
+  summaryUpdatedAt DateTime?
+  createdAt        DateTime            @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  assignee  User?     @relation("AssignedAgent", fields: [assigneeId], references: [id], onDelete: SetNull)
+  messages  Message[]
+
+  @@index([workspaceId, status])
+  @@index([workspaceId, channel])
+  @@index([workspaceId, assigneeId])
+  @@index([workspaceId, lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id               String     @id @default(uuid())
+  conversationId   String
+  workspaceId      String
+  senderType       SenderType
+  senderId         String?
+  bodyHtml         String
+  bodyText         String
+  channel          Channel
+  emailMessageId   String?
+  emailInReplyTo   String?
+  emailReferences  String?
+  emailDeliveryStatus String? // "SENT" | "FAILED" — only meaningful for outbound EMAIL messages
+  readAt           DateTime?
+  createdAt        DateTime   @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User?         @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@index([workspaceId])
+  @@index([emailMessageId])
+  @@map("messages")
+}
+
+model KbCategory {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  slug        String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  articles  KbArticle[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@map("kb_categories")
+}
+
+model KbArticle {
+  id          String        @id @default(uuid())
+  workspaceId String
+  categoryId  String
+  title       String
+  slug        String
+  contentJson Json
+  contentHtml String
+  status      ArticleStatus @default(DRAFT)
+  searchVector Unsupported("tsvector")?
+  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  category  KbCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, status])
+  @@index([searchVector], type: Gin)
+  @@map("kb_articles")
+}
+
+model Domain {
+  id                 String       @id @default(uuid())
+  workspaceId        String
+  hostname           String       @unique
+  verificationToken  String
+  status             DomainStatus @default(PENDING)
+  verifiedAt         DateTime?
+  lastCheckedAt      DateTime?
+  createdAt          DateTime     @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("domains")
+}

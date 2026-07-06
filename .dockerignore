@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+**/dist
+**/build
+.git
+*.log
+.env
+**/.env
+packages/web/public/tele-widget.js
