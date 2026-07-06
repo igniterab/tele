@@ -29,8 +29,35 @@ app; runs migrations and seeds a demo workspace automatically.
 | http://localhost:5173/demo/index.html | Demo "customer website" with the chat widget embedded |
 | http://localhost:1080 | Maildev — see outbound + simulated inbound email |
 
-**Demo login:** `ada@example.com` / `password123` (admin), or
-`bob@example.com` / `password123` (agent).
+**Demo logins** (all password `password123`, all in the **Acme Support** workspace):
+
+| Email | Role |
+|-------|------|
+| `ada@example.com` | Admin |
+| `erin@example.com` | Admin |
+| `bob@example.com` | Agent |
+| `carol@example.com` | Agent |
+| `dave@example.com` | Agent |
+
+`ada` and `bob` are created by the seed; `carol`, `dave`, and `erin` are added
+by a small idempotent script — run it any time (safe to re-run):
+
+```bash
+npm exec -w @tele/api -- tsx scripts/add-users.ts
+```
+
+### Simulate a chat across two windows
+
+- **Visitor ↔ agent (live chat):** log in as an agent (e.g. `carol@example.com`)
+  in your **normal window** and open the Inbox; open the
+  [widget demo page](http://localhost:5173/demo/index.html) in an **incognito
+  window** and chat as an anonymous visitor (no login — the widget issues its
+  own visitor token per browser, so incognito is a clean separate visitor).
+  Messages, typing indicators, read receipts, and online status flow both ways
+  live. Each incognito window is a new visitor.
+- **Agent ↔ agent (assignment / presence):** log in as `carol@example.com` in one
+  window and `dave@example.com` in incognito. Both share the same live inbox —
+  assign a conversation from one and watch it update in the other.
 
 To enable real AI summarization, set `ANTHROPIC_API_KEY` in your shell before
 `docker compose up` (it's passed through). Without it, summarization no-ops
