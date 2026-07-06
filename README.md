@@ -75,7 +75,8 @@ priority order:
 
 With neither configured, summarization no-ops cleanly (the panel shows
 "No summary yet"). Summaries regenerate, debounced, as a conversation grows and
-skip the call when nothing has changed.
+skip the call when nothing has changed. The summary panel also has a **Refresh**
+button to force an on-demand regeneration from the full transcript at any time.
 
 ## Local development (without Docker for the apps)
 
@@ -117,7 +118,8 @@ npm run dev:web      # http://localhost:5173
    articles.
 6. **AI summarization** — open a longer conversation; the right-hand panel shows
    a generated summary (uses local Ollama by default, or Anthropic — see AI
-   summarization above; degrades gracefully with neither).
+   summarization above; degrades gracefully with neither). It updates as the
+   conversation grows, or hit **Refresh** to regenerate it on demand.
 7. **Custom domains** — Settings › Domains › connect a hostname. See the DNS
    records to add and watch the verification → SSL → active state machine
    advance (SSL issuance is stubbed — see docs/CUSTOM_DOMAINS.md).

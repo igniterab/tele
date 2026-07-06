@@ -1,9 +1,48 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ConversationDTO } from "@tele/shared";
+import { conversationsApi } from "../../../lib/conversationsApi";
 
-export default function SummaryPanel({ conversation }: { conversation: ConversationDTO }) {
+export default function SummaryPanel({
+  conversation,
+  workspaceId,
+}: {
+  conversation: ConversationDTO;
+  workspaceId: string;
+}) {
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
+
+  async function refresh() {
+    if (refreshing) return;
+    setRefreshing(true);
+    setError(false);
+    try {
+      const updated = await conversationsApi.refreshSummary(workspaceId, conversation.id);
+      queryClient.setQueryData(["conversation", workspaceId, conversation.id], updated);
+    } catch {
+      setError(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return (
     <aside className="w-72 shrink-0 border-l border-slate-200 bg-slate-50 p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">AI Summary</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">AI Summary</h3>
+        <button
+          onClick={refresh}
+          disabled={refreshing}
+          className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+        >
+          {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
+      {error && (
+        <div className="mt-2 rounded bg-red-50 px-2 py-1 text-[11px] text-red-700">Couldn't refresh summary</div>
+      )}
       {!conversation.summary ? (
         <p className="mt-2 text-xs text-slate-400">
           No summary yet. One will be generated automatically as the conversation grows.

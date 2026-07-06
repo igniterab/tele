@@ -149,11 +149,16 @@ async function broadcastSummary(conversationId: string, summary: ConversationSum
  * repeatedly for the same conversation — skips the LLM call entirely if
  * nothing has changed since the last successful summary.
  */
-export async function summarizeConversation(conversationId: string): Promise<void> {
+export async function summarizeConversation(
+  conversationId: string,
+  opts: { force?: boolean } = {},
+): Promise<void> {
   const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
   if (!conversation) return;
 
-  if (conversation.summaryUpdatedAt && conversation.summaryUpdatedAt >= conversation.lastMessageAt) {
+  // A manual "Refresh AI summary" (force) always regenerates; the debounced
+  // background job skips when nothing new has happened since the last summary.
+  if (!opts.force && conversation.summaryUpdatedAt && conversation.summaryUpdatedAt >= conversation.lastMessageAt) {
     return; // already summarized everything that's happened so far
   }
 

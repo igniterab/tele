@@ -46,6 +46,13 @@ export const conversationsApi = {
   markRead: (workspaceId: string, conversationId: string) =>
     api.post(`/api/workspaces/${workspaceId}/conversations/${conversationId}/read`),
 
+  refreshSummary: (workspaceId: string, conversationId: string) =>
+    api
+      .post<{ conversation: ConversationDTO }>(
+        `/api/workspaces/${workspaceId}/conversations/${conversationId}/summarize`,
+      )
+      .then((r) => r.conversation),
+
   assign: (workspaceId: string, conversationId: string, assigneeId: string | null) =>
     api
       .patch<{ conversation: ConversationDTO }>(

@@ -103,17 +103,23 @@ const SUMMARIZE_DEBOUNCE_MS = 5000;
  */
 export async function enqueueSummarize(conversationId: string) {
   const jobId = `summarize-${conversationId}`; // BullMQ job IDs may not contain ":"
+  // The fixed jobId debounces bursts to one run, but BullMQ refuses to re-add a
+  // jobId that still exists in ANY state — including "completed"/"failed" — so a
+  // finished job would silently block every future summarize for this
+  // conversation. Clear the prior job before scheduling the next; skip only a
+  // job that's actively running (it can't be removed, and it'll free its id on
+  // completion via removeOnComplete below).
   const existing = await aiSummarizeQueue.getJob(jobId);
   if (existing) {
     const state = await existing.getState();
-    if (state === "delayed" || state === "waiting") {
-      await existing.remove();
+    if (state !== "active") {
+      await existing.remove().catch(() => {});
     }
   }
   await aiSummarizeQueue.add(
     "summarize",
     { conversationId },
-    { jobId, delay: SUMMARIZE_DEBOUNCE_MS },
+    { jobId, delay: SUMMARIZE_DEBOUNCE_MS, removeOnComplete: true, removeOnFail: true },
   );
 }
 

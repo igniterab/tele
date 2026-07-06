@@ -305,7 +305,7 @@ export default function ConversationDetail({ workspaceId, conversationId }: Prop
             </div>
           </div>
         </div>
-        <SummaryPanel conversation={conversation} />
+        <SummaryPanel conversation={conversation} workspaceId={workspaceId} />
       </div>
     </div>
   );

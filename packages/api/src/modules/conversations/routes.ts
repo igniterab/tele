@@ -8,6 +8,7 @@ import {
   updateConversationStatusSchema,
 } from "@tele/shared";
 import * as conversationsService from "./service.js";
+import { summarizeConversation } from "../ai/summarize.js";
 import { createMessage, listMessages, markConversationRead } from "../messages/service.js";
 import { toMessageDTO } from "../messages/mappers.js";
 import { ApiError } from "../../plugins/error-handler.js";
@@ -55,6 +56,17 @@ export default async function conversationsRoutes(fastify: FastifyInstance) {
     const { id } = req.params as { id: string };
     await markConversationRead(req.workspace!.id, id, "AGENT");
     reply.send({ ok: true });
+  });
+
+  // Manual "Refresh AI summary": force-regenerate now, bypassing the freshness
+  // guard. Runs inline (not via the debounced queue) so the agent gets an
+  // immediate result; the fresh summary is also broadcast over the socket.
+  fastify.post("/api/workspaces/:workspaceId/conversations/:id/summarize", { preHandler }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    await conversationsService.getConversation(req.workspace!.id, id); // 404s if not in this workspace
+    await summarizeConversation(id, { force: true });
+    const conversation = await conversationsService.getConversation(req.workspace!.id, id);
+    reply.send({ conversation });
   });
 
   fastify.patch("/api/workspaces/:workspaceId/conversations/:id/assign", { preHandler }, async (req, reply) => {
