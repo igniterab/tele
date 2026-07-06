@@ -70,7 +70,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "npm run prisma:migrate --workspace @tele/api && npm run seed --workspace @tele/api"
+    command: sh -c "npm run prisma:migrate --workspace @tele/api && npm run seed --workspace @tele/api && npm run seed:kb --workspace @tele/api"
 
   api:
     build:
