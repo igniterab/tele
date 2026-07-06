@@ -11,18 +11,18 @@ export default function AppLayout() {
   }
 
   const navItemClass = ({ isActive }: { isActive: boolean }) =>
-    `block rounded-md px-3 py-2 text-sm font-medium ${
-      isActive ? "bg-brand-50 text-brand-700" : "text-slate-600 hover:bg-slate-100"
+    `block rounded-lg px-3 py-2 text-sm font-medium ${
+      isActive ? "bg-brand-50 text-brand-700 shadow-sm" : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-700"
     }`;
 
   return (
     <div className="flex h-screen">
-      <aside className="flex w-56 flex-col border-r border-slate-200 bg-white">
-        <div className="border-b border-slate-200 p-4">
-          <div className="text-sm font-semibold text-slate-900">Tele</div>
+      <aside className="flex w-56 flex-col border-r border-slate-100 bg-white/70 backdrop-blur">
+        <div className="border-b border-slate-100 p-4">
+          <div className="text-sm font-semibold tracking-tight text-slate-800">Tele</div>
           {workspaces.length > 1 ? (
             <select
-              className="mt-2 w-full rounded border border-slate-200 py-1 text-xs"
+              className="mt-2 w-full rounded-lg border border-slate-200 bg-white py-1 text-xs"
               value={currentWorkspace?.id ?? ""}
               onChange={(e) => setCurrentWorkspaceId(e.target.value)}
             >
@@ -50,7 +50,7 @@ export default function AppLayout() {
             Domains
           </NavLink>
         </nav>
-        <div className="border-t border-slate-200 p-3">
+        <div className="border-t border-slate-100 p-3">
           <div className="truncate text-xs text-slate-500">{user?.email}</div>
           <button onClick={onLogout} className="mt-1 text-xs text-slate-400 hover:text-slate-700">
             Log out

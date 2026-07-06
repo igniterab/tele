@@ -53,7 +53,7 @@ export default function PublicKb() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for help…"
-          className="mt-6 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="mt-6 w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
 
         {results !== null ? (

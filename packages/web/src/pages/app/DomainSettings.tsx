@@ -80,7 +80,7 @@ export default function DomainSettings() {
               value={hostname}
               onChange={(e) => setHostname(e.target.value)}
               placeholder="help.yourcompany.com"
-              className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded border border-slate-200 px-2 py-1.5 text-sm"
             />
           </div>
           <button

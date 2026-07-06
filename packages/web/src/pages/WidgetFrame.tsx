@@ -226,7 +226,7 @@ export default function WidgetFrame() {
           }}
           rows={2}
           placeholder="Type a message…"
-          className="w-full resize-none rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+          className="w-full resize-none rounded border border-slate-200 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
         />
         <div className="mt-1 flex justify-end">
           <button

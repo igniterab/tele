@@ -66,7 +66,7 @@ export default function TeamSettings() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded border border-slate-200 px-2 py-1.5 text-sm"
               placeholder="teammate@company.com"
             />
           </div>
@@ -76,7 +76,7 @@ export default function TeamSettings() {
               id="invite-role"
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as Role)}
-              className="mt-1 rounded border border-slate-300 px-2 py-1.5 text-sm"
+              className="mt-1 rounded border border-slate-200 px-2 py-1.5 text-sm"
             >
               <option value="AGENT">Agent</option>
               <option value="ADMIN">Admin</option>

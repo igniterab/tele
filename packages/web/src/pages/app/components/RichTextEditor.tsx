@@ -39,7 +39,7 @@ export default function RichTextEditor({ contentJson, onChange }: Props) {
     `rounded px-2 py-1 text-xs font-medium ${active ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`;
 
   return (
-    <div className="rounded-md border border-slate-300 bg-white">
+    <div className="rounded-md border border-slate-200 bg-white">
       <div className="flex flex-wrap gap-1 border-b border-slate-200 p-2">
         <button type="button" className={btn(editor.isActive("bold"))} onClick={() => editor.chain().focus().toggleBold().run()}>
           Bold

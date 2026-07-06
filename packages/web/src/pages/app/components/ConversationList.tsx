@@ -36,17 +36,17 @@ export default function ConversationList({
   onSelect,
 }: Props) {
   return (
-    <div className="flex h-full w-80 flex-col border-r border-slate-200 bg-white">
-      <div className="border-b border-slate-200 p-3">
+    <div className="flex h-full w-80 flex-col border-r border-slate-100 bg-white/70">
+      <div className="border-b border-slate-100 p-3">
         <div className="flex gap-1">
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.label}
               onClick={() => onFiltersChange({ ...filters, status: tab.value })}
-              className={`rounded px-2 py-1 text-xs font-medium ${
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
                 filters.status === tab.value
-                  ? "bg-brand-50 text-brand-700"
-                  : "text-slate-500 hover:bg-slate-100"
+                  ? "bg-brand-50 text-brand-700 shadow-sm"
+                  : "text-slate-500 hover:bg-slate-100/80"
               }`}
             >
               {tab.label}
@@ -54,7 +54,7 @@ export default function ConversationList({
           ))}
         </div>
         <select
-          className="mt-2 w-full rounded border border-slate-200 py-1 text-xs"
+          className="mt-2 w-full rounded-lg border border-slate-200 bg-white py-1 text-xs"
           value={filters.channel ?? ""}
           onChange={(e) => onFiltersChange({ ...filters, channel: (e.target.value || undefined) as Channel | undefined })}
         >
@@ -72,12 +72,12 @@ export default function ConversationList({
           <button
             key={c.id}
             onClick={() => onSelect(c.id)}
-            className={`block w-full border-b border-slate-100 px-3 py-3 text-left hover:bg-slate-50 ${
-              selectedId === c.id ? "bg-brand-50" : ""
+            className={`block w-full border-b border-slate-50 px-3 py-3 text-left transition-colors hover:bg-slate-50 ${
+              selectedId === c.id ? "bg-brand-50/70 shadow-[inset_2px_0_0_theme(colors.brand.500)]" : ""
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="truncate text-sm font-medium text-slate-900">
+              <span className="truncate text-sm font-medium text-slate-800">
                 {c.contact.name || c.contact.email || "Visitor"}
               </span>
               <span className="shrink-0 text-[11px] text-slate-400">{timeAgo(c.lastMessageAt)}</span>

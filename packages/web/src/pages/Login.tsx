@@ -30,8 +30,8 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Log in to Tele</h1>
+      <div className="w-full max-w-sm animate-fade-in rounded-2xl border border-slate-100 bg-white/90 p-8 shadow-card backdrop-blur">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-800">Log in to Tele</h1>
         <p className="mt-1 text-sm text-slate-500">Welcome back.</p>
         <form className="mt-6 space-y-4" onSubmit={onSubmit}>
           <div>
@@ -42,7 +42,7 @@ export default function Login() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
           <div>
@@ -53,7 +53,7 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}

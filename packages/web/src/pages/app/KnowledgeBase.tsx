@@ -169,7 +169,7 @@ function ArticleEditor({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Article title"
-          className="flex-1 border-b border-transparent text-2xl font-semibold text-slate-900 focus:border-slate-300 focus:outline-none"
+          className="flex-1 border-b border-transparent text-2xl font-semibold text-slate-900 focus:border-slate-200 focus:outline-none"
         />
         <span
           className={`shrink-0 rounded px-2 py-1 text-xs font-medium ${
@@ -200,7 +200,7 @@ function ArticleEditor({
         <button
           onClick={() => save()}
           disabled={saving}
-          className="rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          className="rounded border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
         >
           Save draft
         </button>
@@ -215,7 +215,7 @@ function ArticleEditor({
           <button
             onClick={() => save("DRAFT")}
             disabled={saving}
-            className="rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className="rounded border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
             Unpublish
           </button>

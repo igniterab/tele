@@ -223,14 +223,14 @@ export default function ConversationDetail({ workspaceId, conversationId }: Prop
           ) : (
             <button
               onClick={() => setStatus("OPEN")}
-              className="rounded border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
+              className="rounded border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
             >
               Reopen
             </button>
           )}
           <button
             onClick={() => snooze(4)}
-            className="rounded border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
+            className="rounded border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
           >
             Snooze 4h
           </button>
@@ -270,7 +270,7 @@ export default function ConversationDetail({ workspaceId, conversationId }: Prop
               }}
               placeholder="Write a reply…"
               rows={3}
-              className="w-full resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
             <div className="mt-2 flex justify-end">
               <button
