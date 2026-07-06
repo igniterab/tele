@@ -6,9 +6,9 @@ import { analyticsApi } from "../../lib/analyticsApi";
 // Chart palette — validated for CVD separation + contrast (dataviz skill).
 // Primary magnitude bars use the app's brand periwinkle as a single hue;
 // the status breakdown uses distinct, always-labeled hues.
-const BRAND = "#5f6ad0";
+const BRAND = "#7c3aed";
 const STATUS_COLOR: Record<string, string> = {
-  OPEN: "#5f6ad0",
+  OPEN: "#7c3aed",
   SNOOZED: "#eda100",
   RESOLVED: "#16a34a",
 };
@@ -46,7 +46,7 @@ function Analytics({ data }: { data: AnalyticsDTO }) {
       {/* KPI tiles */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile label="Conversations" value={totals.conversations} />
-        <StatTile label="Open" value={totals.open} accent="#5f6ad0" />
+        <StatTile label="Open" value={totals.open} accent="#7c3aed" />
         <StatTile label="Unassigned" value={totals.unassigned} accent={totals.unassigned > 0 ? "#eda100" : undefined} />
         <StatTile label="Resolution rate" value={`${Math.round(data.resolutionRate * 100)}%`} />
         <StatTile label="Avg msgs / convo" value={data.avgMessagesPerConversation.toFixed(1)} />

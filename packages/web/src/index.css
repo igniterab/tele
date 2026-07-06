@@ -8,11 +8,11 @@ html, body, #root {
 
 body {
   @apply text-slate-700 antialiased;
-  /* Soft off-white canvas with a barely-there brand glow in the corner. */
-  background-color: #f6f7fb;
+  /* Soft lavender canvas with a barely-there violet glow in the corner. */
+  background-color: #f7f5ff;
   background-image:
-    radial-gradient(1100px 620px at 100% -8%, rgba(123, 133, 224, 0.07), transparent 62%),
-    radial-gradient(900px 520px at -8% 108%, rgba(123, 133, 224, 0.05), transparent 60%);
+    radial-gradient(1100px 620px at 100% -8%, rgba(124, 58, 237, 0.07), transparent 62%),
+    radial-gradient(900px 520px at -8% 108%, rgba(124, 58, 237, 0.05), transparent 60%);
   background-attachment: fixed;
 }
 
@@ -30,14 +30,14 @@ body {
   /* Softer, offset focus ring instead of a hard outline. */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(123, 133, 224, 0.28);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.28);
     border-radius: 0.5rem;
   }
 }
 
 /* Soft, unobtrusive selection color. */
 ::selection {
-  background: rgba(123, 133, 224, 0.22);
+  background: rgba(124, 58, 237, 0.22);
 }
 
 /* Thin, rounded, low-contrast scrollbars. */

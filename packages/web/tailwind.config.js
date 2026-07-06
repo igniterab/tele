@@ -6,16 +6,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Softer, less-saturated periwinkle-indigo — calmer than the old punchy blue.
+        // SuperProfile-inspired vibrant violet/purple — playful and modern.
         brand: {
-          50: "#f5f6fe",
-          100: "#e9ebfb",
-          200: "#d6dbf8",
-          300: "#b7bff1",
-          400: "#949ee8",
-          500: "#7b85e0",
-          600: "#5f6ad0",
-          700: "#4c56b4",
+          50: "#f6f4ff",
+          100: "#ece7ff",
+          200: "#dcd0ff",
+          300: "#c3adff",
+          400: "#a480fb",
+          500: "#8b5cf6",
+          600: "#7c3aed",
+          700: "#6b21d4",
         },
       },
       fontFamily: {
