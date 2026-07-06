@@ -76,11 +76,22 @@ export default function ConversationList({
               selectedId === c.id ? "bg-brand-50/70 shadow-[inset_2px_0_0_theme(colors.brand.500)]" : ""
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="truncate text-sm font-medium text-slate-800">
-                {c.contact.name || c.contact.email || "Visitor"}
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex min-w-0 items-center gap-1.5">
+                {c.unreadCount > 0 && (
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-brand-600" aria-label="Unread" />
+                )}
+                <span
+                  className={`truncate text-sm ${
+                    c.unreadCount > 0 ? "font-semibold text-slate-900" : "font-medium text-slate-800"
+                  }`}
+                >
+                  {c.contact.name || c.contact.email || "Visitor"}
+                </span>
               </span>
-              <span className="shrink-0 text-[11px] text-slate-400">{timeAgo(c.lastMessageAt)}</span>
+              <span className={`shrink-0 text-[11px] ${c.unreadCount > 0 ? "font-medium text-brand-700" : "text-slate-400"}`}>
+                {timeAgo(c.lastMessageAt)}
+              </span>
             </div>
             <div className="mt-0.5 flex items-center gap-1.5">
               <span

@@ -67,8 +67,12 @@ async function broadcastUpdate(workspaceId: string, conversationId: string) {
     include: { contact: true, assignee: true },
   });
   if (!conversation) return;
+  const unread = await prisma.message.count({ where: { conversationId, senderType: "CONTACT", readAt: null } });
   try {
-    getEmitter().of("/agent").to(workspaceRoom(workspaceId)).emit("conversation:updated", toConversationDTO(conversation));
+    getEmitter()
+      .of("/agent")
+      .to(workspaceRoom(workspaceId))
+      .emit("conversation:updated", toConversationDTO({ ...conversation, _unreadCount: unread }));
   } catch (err) {
     logger.warn({ err }, "failed to broadcast conversation update");
   }

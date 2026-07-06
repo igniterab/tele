@@ -49,11 +49,16 @@ export async function createMessage(input: CreateMessageInput) {
     include: { contact: true, assignee: true },
   });
 
+  // Carry the real unread count on the conversation:updated broadcast, otherwise
+  // the inbox list would overwrite its badge with 0 on every new message.
+  const unreadCount = await countUnreadForAgent(conversation.id);
   try {
     const io = getEmitter();
     io.of("/agent").to(conversationRoom(conversation.id)).emit("message:new", toMessageDTO(message));
     io.of("/widget").to(conversationRoom(conversation.id)).emit("message:new", toMessageDTO(message));
-    io.of("/agent").to(workspaceRoom(input.workspaceId)).emit("conversation:updated", toConversationDTO(conversation));
+    io.of("/agent")
+      .to(workspaceRoom(input.workspaceId))
+      .emit("conversation:updated", toConversationDTO({ ...conversation, _unreadCount: unreadCount }));
   } catch (err) {
     logger.warn({ err }, "realtime broadcast failed for new message");
   }
@@ -99,8 +104,16 @@ export async function listMessages(workspaceId: string, conversationId: string, 
   return messages.map(toMessageDTO);
 }
 
+/** Unread = the visitor's (CONTACT) messages an agent hasn't read yet. */
+export async function countUnreadForAgent(conversationId: string): Promise<number> {
+  return prisma.message.count({ where: { conversationId, senderType: "CONTACT", readAt: null } });
+}
+
 export async function markConversationRead(workspaceId: string, conversationId: string, readBy: SenderType) {
-  const conversation = await prisma.conversation.findFirst({ where: { id: conversationId, workspaceId } });
+  const conversation = await prisma.conversation.findFirst({
+    where: { id: conversationId, workspaceId },
+    include: { contact: true, assignee: true },
+  });
   if (!conversation) return;
 
   const otherType: SenderType = readBy === "AGENT" ? "CONTACT" : "AGENT";
@@ -115,4 +128,12 @@ export async function markConversationRead(workspaceId: string, conversationId: 
   const payload = { conversationId, readAt: readAt.toISOString(), readBy };
   io.of("/agent").to(conversationRoom(conversationId)).emit("message:read", payload);
   io.of("/widget").to(conversationRoom(conversationId)).emit("message:read", payload);
+
+  // When an agent reads, the inbox unread badge should clear live for everyone.
+  if (readBy === "AGENT") {
+    const unreadCount = await countUnreadForAgent(conversationId);
+    io.of("/agent")
+      .to(workspaceRoom(workspaceId))
+      .emit("conversation:updated", toConversationDTO({ ...conversation, _unreadCount: unreadCount }));
+  }
 }
