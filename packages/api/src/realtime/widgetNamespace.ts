@@ -5,6 +5,7 @@ import { logger } from "../logger.js";
 import { workspaceRoom, conversationRoom } from "./rooms.js";
 import { addVisitorSocket, removeVisitorSocket, isAgentOnline } from "./presence.js";
 import { markConversationRead } from "../modules/messages/service.js";
+import { getEmitter } from "./emitter.js";
 import { prisma } from "../db/client.js";
 
 interface WidgetSocketData {
@@ -56,29 +57,17 @@ export function registerWidgetNamespace(io: Server) {
     });
 
     socket.on("typing:start", ({ conversationId }) => {
-      socket.to(conversationRoom(conversationId)).emit("typing:start", {
-        conversationId,
-        senderType: "CONTACT",
-        senderName: "Visitor",
-      });
-      socket.to(workspaceRoom(workspaceId)).emit("typing:start", {
-        conversationId,
-        senderType: "CONTACT",
-        senderName: "Visitor",
-      });
+      const payload = { conversationId, senderType: "CONTACT" as const, senderName: "Visitor" };
+      // Other tabs of the same visitor (same namespace, exclude sender)...
+      socket.to(conversationRoom(conversationId)).emit("typing:start", payload);
+      // ...and the agent, who lives in the /agent namespace (cross-namespace).
+      getEmitter().of("/agent").to(conversationRoom(conversationId)).emit("typing:start", payload);
     });
 
     socket.on("typing:stop", ({ conversationId }) => {
-      socket.to(conversationRoom(conversationId)).emit("typing:stop", {
-        conversationId,
-        senderType: "CONTACT",
-        senderName: "Visitor",
-      });
-      socket.to(workspaceRoom(workspaceId)).emit("typing:stop", {
-        conversationId,
-        senderType: "CONTACT",
-        senderName: "Visitor",
-      });
+      const payload = { conversationId, senderType: "CONTACT" as const, senderName: "Visitor" };
+      socket.to(conversationRoom(conversationId)).emit("typing:stop", payload);
+      getEmitter().of("/agent").to(conversationRoom(conversationId)).emit("typing:stop", payload);
     });
 
     socket.on("message:read", async ({ conversationId }) => {

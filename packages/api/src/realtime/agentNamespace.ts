@@ -8,6 +8,7 @@ import { SESSION_COOKIE } from "../plugins/auth.js";
 import { workspaceRoom, conversationRoom } from "./rooms.js";
 import { addAgentSocket, removeAgentSocket, onlineAgentIds } from "./presence.js";
 import { markConversationRead } from "../modules/messages/service.js";
+import { getEmitter } from "./emitter.js";
 
 interface AgentSocketData {
   userId: string;
@@ -62,19 +63,17 @@ export function registerAgentNamespace(io: Server) {
     });
 
     socket.on("typing:start", ({ conversationId }) => {
-      socket.to(conversationRoom(conversationId)).emit("typing:start", {
-        conversationId,
-        senderType: "AGENT",
-        senderName: userName,
-      });
+      const payload = { conversationId, senderType: "AGENT" as const, senderName: userName };
+      // Other agents viewing the same conversation (same namespace, exclude sender)...
+      socket.to(conversationRoom(conversationId)).emit("typing:start", payload);
+      // ...and the visitor, who lives in the /widget namespace (cross-namespace).
+      getEmitter().of("/widget").to(conversationRoom(conversationId)).emit("typing:start", payload);
     });
 
     socket.on("typing:stop", ({ conversationId }) => {
-      socket.to(conversationRoom(conversationId)).emit("typing:stop", {
-        conversationId,
-        senderType: "AGENT",
-        senderName: userName,
-      });
+      const payload = { conversationId, senderType: "AGENT" as const, senderName: userName };
+      socket.to(conversationRoom(conversationId)).emit("typing:stop", payload);
+      getEmitter().of("/widget").to(conversationRoom(conversationId)).emit("typing:stop", payload);
     });
 
     socket.on("message:read", async ({ conversationId }) => {
