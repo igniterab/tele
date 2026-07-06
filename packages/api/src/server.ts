@@ -17,6 +17,7 @@ import widgetRoutes from "./modules/widget/routes.js";
 import emailRoutes from "./modules/email/routes.js";
 import kbRoutes from "./modules/kb/routes.js";
 import domainRoutes from "./modules/domains/routes.js";
+import analyticsRoutes from "./modules/analytics/routes.js";
 
 async function main() {
   const fastify = Fastify({ loggerInstance: logger, trustProxy: true });
@@ -53,6 +54,7 @@ async function main() {
   await fastify.register(emailRoutes);
   await fastify.register(kbRoutes);
   await fastify.register(domainRoutes);
+  await fastify.register(analyticsRoutes);
 
   await fastify.ready();
   await initRealtime(fastify.server);

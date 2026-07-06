@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AcceptInvite from "./pages/AcceptInvite";
 import AppLayout from "./pages/app/AppLayout";
+import Dashboard from "./pages/app/Dashboard";
 import Inbox from "./pages/app/Inbox";
 import TeamSettings from "./pages/app/TeamSettings";
 import WidgetFrame from "./pages/WidgetFrame";
@@ -45,7 +46,8 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="inbox" replace />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="inbox" element={<Inbox />} />
         <Route path="inbox/:conversationId" element={<Inbox />} />
         <Route path="knowledge-base" element={<KnowledgeBase />} />

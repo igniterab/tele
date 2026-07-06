@@ -146,3 +146,22 @@ export interface ClientToServerEvents {
   "typing:stop": (payload: { conversationId: string }) => void;
   "message:read": (payload: { conversationId: string }) => void;
 }
+
+export interface AnalyticsDTO {
+  totals: {
+    conversations: number;
+    open: number;
+    snoozed: number;
+    resolved: number;
+    unassigned: number; // open + unassigned
+    contacts: number;
+    messages: number;
+    publishedArticles: number;
+  };
+  resolutionRate: number; // 0..1 (resolved / total)
+  avgMessagesPerConversation: number;
+  byChannel: { channel: Channel; count: number }[];
+  byStatus: { status: ConversationStatus; count: number }[];
+  conversationsPerDay: { date: string; count: number }[]; // last 14 days, YYYY-MM-DD
+  agentWorkload: { name: string; count: number }[]; // conversations assigned per agent
+}

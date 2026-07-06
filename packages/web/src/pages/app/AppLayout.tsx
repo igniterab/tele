@@ -37,6 +37,9 @@ export default function AppLayout() {
           )}
         </div>
         <nav className="flex-1 space-y-1 p-3">
+          <NavLink to="/app/dashboard" className={navItemClass}>
+            Dashboard
+          </NavLink>
           <NavLink to="/app/inbox" className={navItemClass}>
             Inbox
           </NavLink>
