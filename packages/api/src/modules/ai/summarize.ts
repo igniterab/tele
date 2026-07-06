@@ -18,8 +18,26 @@ const SummarySchema = z.object({
 });
 
 const MAX_RECENT_MESSAGES = 30;
-const REQUEST_TIMEOUT_MS = 15_000;
+const ANTHROPIC_TIMEOUT_MS = 15_000;
+// Local models can be slow on a cold load (weights paged into memory on the
+// first call), so give Ollama a more generous ceiling than the hosted API.
+const OLLAMA_TIMEOUT_MS = 60_000;
 const MAX_OUTPUT_TOKENS = 400;
+
+const SYSTEM_PROMPT =
+  "You summarize customer support conversations for a support agent who is about to read this thread for the first time. Be concise: a few words to one short sentence per field. Base the summary only on the messages provided, not on assumptions.";
+
+// Plain JSON Schema for Ollama's structured-output `format` param (mirrors
+// SummarySchema above; Ollama doesn't use the Anthropic/zod helper).
+const SUMMARY_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    whatUserWants: { type: "string" },
+    whatsBeenTried: { type: "string" },
+    currentStatus: { type: "string" },
+  },
+  required: ["whatUserWants", "whatsBeenTried", "currentStatus"],
+} as const;
 
 let client: Anthropic | null | undefined;
 
@@ -29,10 +47,85 @@ function getClient(): Anthropic | null {
   return client;
 }
 
+type Provider = "ollama" | "anthropic";
+
+// Ollama wins when configured (local, free, no key); otherwise Anthropic if a
+// key is present; otherwise null → stub/no-op.
+function activeProvider(): Provider | null {
+  if (env.OLLAMA_BASE_URL) return "ollama";
+  if (env.ANTHROPIC_API_KEY) return "anthropic";
+  return null;
+}
+
 function senderLabel(senderType: string): string {
   if (senderType === "AGENT") return "Agent";
   if (senderType === "CONTACT") return "Customer";
   return "System";
+}
+
+/** Validate an arbitrary parsed object into a well-formed summary payload. */
+function coerceSummary(parsed: unknown): ConversationSummaryPayload {
+  if (!parsed || typeof parsed !== "object") throw new Error("summary output was not an object");
+  const p = parsed as Record<string, unknown>;
+  const field = (k: keyof ConversationSummaryPayload) => {
+    const v = p[k];
+    if (typeof v !== "string" || !v.trim()) throw new Error(`summary output missing field: ${String(k)}`);
+    return v.trim();
+  };
+  return {
+    whatUserWants: field("whatUserWants"),
+    whatsBeenTried: field("whatsBeenTried"),
+    currentStatus: field("currentStatus"),
+  };
+}
+
+async function summarizeWithAnthropic(userContent: string): Promise<ConversationSummaryPayload> {
+  const anthropic = getClient();
+  if (!anthropic) throw new Error("Anthropic client not configured");
+  const response = await anthropic.messages.parse(
+    {
+      model: env.ANTHROPIC_MODEL,
+      max_tokens: MAX_OUTPUT_TOKENS,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userContent }],
+      output_config: { format: zodOutputFormat(SummarySchema) },
+    },
+    { timeout: ANTHROPIC_TIMEOUT_MS },
+  );
+  if (!response.parsed_output) throw new Error("model response did not include parsed_output");
+  return coerceSummary(response.parsed_output);
+}
+
+async function summarizeWithOllama(userContent: string): Promise<ConversationSummaryPayload> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${env.OLLAMA_BASE_URL!.replace(/\/$/, "")}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: env.OLLAMA_MODEL,
+        stream: false,
+        // Ollama structured outputs: constrains generation to this JSON Schema.
+        format: SUMMARY_JSON_SCHEMA,
+        options: { temperature: 0.2, num_predict: MAX_OUTPUT_TOKENS },
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userContent },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(`Ollama HTTP ${res.status}: ${await res.text().catch(() => "")}`);
+    }
+    const data = (await res.json()) as { message?: { content?: string } };
+    const content = data.message?.content;
+    if (!content) throw new Error("Ollama response had no message content");
+    return coerceSummary(JSON.parse(content));
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function broadcastSummary(conversationId: string, summary: ConversationSummaryPayload | null, status: SummaryStatus, updatedAt: Date) {
@@ -64,9 +157,12 @@ export async function summarizeConversation(conversationId: string): Promise<voi
     return; // already summarized everything that's happened so far
   }
 
-  const anthropic = getClient();
-  if (!anthropic) {
-    logger.warn({ conversationId }, "ANTHROPIC_API_KEY not set — skipping AI summarization (stub mode)");
+  const provider = activeProvider();
+  if (!provider) {
+    logger.warn(
+      { conversationId },
+      "no AI provider configured (set OLLAMA_BASE_URL or ANTHROPIC_API_KEY) — skipping AI summarization (stub mode)",
+    );
     return;
   }
 
@@ -90,25 +186,13 @@ export async function summarizeConversation(conversationId: string): Promise<voi
     .join("\n\n");
 
   try {
-    const response = await anthropic.messages.parse(
-      {
-        model: env.ANTHROPIC_MODEL,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        system:
-          "You summarize customer support conversations for a support agent who is about to read this thread for the first time. Be concise: a few words to one short sentence per field. Base the summary only on the messages provided, not on assumptions.",
-        messages: [{ role: "user", content: userContent }],
-        output_config: { format: zodOutputFormat(SummarySchema) },
-      },
-      { timeout: REQUEST_TIMEOUT_MS },
-    );
-
-    const parsed = response.parsed_output;
-    if (!parsed) throw new Error("model response did not include parsed_output");
+    const parsed =
+      provider === "ollama" ? await summarizeWithOllama(userContent) : await summarizeWithAnthropic(userContent);
 
     const updatedAt = new Date();
     await prisma.conversation.update({
       where: { id: conversationId },
-      data: { summary: parsed, summaryStatus: "FRESH", summaryUpdatedAt: updatedAt },
+      data: { summary: parsed as unknown as Record<string, string>, summaryStatus: "FRESH", summaryUpdatedAt: updatedAt },
     });
     await broadcastSummary(conversationId, parsed, "FRESH", updatedAt);
   } catch (err) {

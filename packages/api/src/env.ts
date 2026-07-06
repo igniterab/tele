@@ -24,6 +24,11 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default("claude-haiku-4-5"),
+  // Local/open-source LLM via Ollama. When OLLAMA_BASE_URL is set it takes
+  // priority over Anthropic for AI summarization (no API key or network needed).
+  // From inside Docker, point at the host: http://host.docker.internal:11434.
+  OLLAMA_BASE_URL: z.string().optional(),
+  OLLAMA_MODEL: z.string().default("llama3.2"),
   // Where a verified custom domain's CNAME should point — in production this
   // is the edge (Caddy/Traefik/Cloudflare) that terminates TLS and routes by
   // Host header to the right workspace's KB. See docs/CUSTOM_DOMAINS.md.

@@ -16,6 +16,12 @@ x-api-env: &api-env
   SMTP_PORT: "1025"
   ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
   ANTHROPIC_MODEL: claude-haiku-4-5
+  # AI summarization via a local Ollama on the host. When set it takes priority
+  # over Anthropic (no API key/network needed). host.docker.internal reaches the
+  # host from inside the container; override the model with OLLAMA_MODEL. Set
+  # OLLAMA_BASE_URL="" to disable and fall back to Anthropic/stub.
+  OLLAMA_BASE_URL: "${OLLAMA_BASE_URL-http://host.docker.internal:11434}"
+  OLLAMA_MODEL: "${OLLAMA_MODEL:-llama3.2}"
   KB_CNAME_TARGET: kb.tele.local
   DOMAIN_VERIFICATION_DEV_BYPASS: "true"
 
@@ -71,6 +77,10 @@ services:
       context: .
       dockerfile: packages/api/Dockerfile
     environment: *api-env
+    # Lets host.docker.internal (Ollama on the host) resolve on Linux too;
+    # Docker Desktop (macOS/Windows) provides it automatically.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "4000:4000"
     depends_on:
@@ -87,6 +97,8 @@ services:
       context: .
       dockerfile: packages/api/Dockerfile
     environment: *api-env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
